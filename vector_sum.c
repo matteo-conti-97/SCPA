@@ -10,7 +10,6 @@ bool checkResult(int *a, int *b, int *c);
 int main(int argc, char *argv[]){
     int rank, size,tag=0;
     int *a, *b, *c;
-    bool is_master = false;
     MPI_Comm comm;
     MPI_Init(&argc, &argv);
     MPI_Comm_dup(MPI_COMM_WORLD, &comm);
