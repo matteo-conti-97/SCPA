@@ -78,11 +78,11 @@ int main(int argc, char *argv[]){
                 printf("%d,", c[i]);
         }
         printf("]\n");*/
+        printf("Elapsed %lf ms\n", (MPI_Wtime()-t1)*1000);
         if(checkResult(a, b, c))
             printf("Result is correct\n");
         else
             printf("Result is wrong\n");
-        printf("Elapsed %lf seconds\n", MPI_Wtime()-t1);
     }
 
     MPI_Finalize();

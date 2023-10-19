@@ -3,9 +3,11 @@
 #include<string.h>
 #include<stdlib.h>
 #include<stdbool.h>
-#define N 50 //Number of rows of matrix
-#define M 40 //Number of columns of matrix and vector size
+#define N 100 //Number of rows of matrix
+#define M 100 //Number of columns of matrix and vector size
 
+
+bool checkResult(int *mat, int *v, int *res);
 
 int main(int argc, char *argv[]){
     int rank, size,tag=0;
@@ -84,7 +86,7 @@ int main(int argc, char *argv[]){
             ret[j] = 0;
             for(int i=0; i<M; i++)
                 ret[j] += mat_part[j*M+i] * v[i];
-            printf("Process slave  %d sum: %d\n", rank, ret[j]);
+            //printf("Process slave  %d sum: %d\n", rank, ret[j]);
 
         }
     }
@@ -92,17 +94,35 @@ int main(int argc, char *argv[]){
     MPI_Gatherv(ret, ret_counts[rank], MPI_INT, c, ret_counts, ret_displacements, MPI_INT, 0, comm);
     if(rank==0){
         
-        printf("Result at process %d is:\n[", rank);
+        /*printf("Result at process %d is:\n[", rank);
         for(int i=0; i<N; i++){
             if(i==N-1)
                 printf("%d", c[i]);
             else
                 printf("%d,", c[i]);
         }
-        printf("]\n");
-        printf("Elapsed %lf seconds\n", MPI_Wtime()-t1);
+        printf("]\n");*/
+        printf("Elapsed %lf ms\n", (MPI_Wtime()-t1)*1000);
+        if(checkResult(mat, v, c))
+            printf("Result is correct\n");
+        else
+            printf("Result is wrong\n");
     }
 
     MPI_Finalize();
     return 0;
+}
+
+bool checkResult(int *mat, int *v, int *res){
+    int *correct_res;
+    correct_res = (int *) malloc(N * sizeof(int));
+    for(int i=0; i<N; i++){
+        correct_res[i] = 0;
+        for(int j=0; j<M; j++){
+            correct_res[i] += mat[i*M+j] * v[j];
+        }
+        if(correct_res[i]!=res[i])
+            return false;
+    }
+    return true;
 }
