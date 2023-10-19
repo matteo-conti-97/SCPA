@@ -97,4 +97,3 @@ bool checkResult(int *a, int *b, int *c){
     return true;
 }
 
-//TODO escludere p0 dallo scatter
