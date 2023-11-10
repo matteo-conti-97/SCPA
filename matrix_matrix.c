@@ -3,37 +3,34 @@
 #include<string.h>
 #include<stdlib.h>
 #include<stdbool.h>
-#define N 10000 //Number of rows of matrix
-#define M 10000 //Number of columns of matrix and vector size
+#define N 400 //Number of rows of matrix a
+#define M 100 //Number of columns of matrix a
+#define P 100 //Number of rows of matrix b
+#define Q 200 //Number of columns of matrix b
+//So resulting matrix is N*Q
 
-
-bool checkResult(int *mat, int *v, int *res);
 
 int main(int argc, char *argv[]){
     int rank, size,tag=0;
-    int *mat, *v, *c;
+    int *mat_a, *mat_b, *mat_c;
     MPI_Comm comm;
     MPI_Init(&argc, &argv);
     MPI_Comm_dup(MPI_COMM_WORLD, &comm);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    srand(1);
 
-    v= (int *) malloc(M * sizeof(int));
-    for(int i=0; i<M; i++){
-        int num = rand() % 101;
-        v[i] = num;
-    } 
 
     if(rank==0){
-        mat= (int *) malloc(N * M *sizeof(int)); //Cause scatter needs contiguous memory
-        c= (int *) malloc(N * sizeof(int));
-        int nm=rand() % 101;
+        mat_a= (int *) malloc(N * M *sizeof(int)); //Cause scatter needs contiguous memory
+        mat_b= (int *) malloc(N * M *sizeof(int));
+        mat_c= (int *) malloc(N * sizeof(int));
+        int cnt=0;
 
         //Generate matrix and vector
         for(int i=0; i<N; i++){
             for(int j=0; j<M; j++){
-                mat[i*M+j] = nm;
+                mat[i*M+j] = cnt;
+                cnt++;
             }
         }
     }
@@ -66,14 +63,13 @@ int main(int argc, char *argv[]){
             //printf("Process %d: send count %d\n", i, send_counts[i]);
         }
 
-        //Allocate memory for the scattered data to receive and do scatter
+        //Do scatter
         mat_part = rank == 0 ? (int *)( MPI_IN_PLACE ) : (int *) malloc(send_counts[rank] * sizeof(int));
-        MPI_Scatterv(mat, send_counts, displacements, MPI_INT, mat_part, send_counts[rank], MPI_INT, 0, comm);
-        //Broadcast vector
-        MPI_Bcast(v, M, MPI_INT, 0, comm);
+        MPI_Scatterv(mat_a, send_counts, displacements, MPI_INT, mat_part, send_counts[rank], MPI_INT, 0, comm);
+
 
     if(rank != 0){        
-        ret= (int *) malloc(ret_counts[rank] * sizeof(int));
+        //ret= (int *) malloc(ret_counts[rank] * sizeof(int));
 
         /*printf("Process %d received array:\n[", rank);
         for(int i=0; i<send_counts[rank]; i++)
@@ -83,16 +79,16 @@ int main(int argc, char *argv[]){
         for(int i=0; i<M; i++)
             printf("%d,", v[i]);
         printf("]\n");*/
-        for(int j=0; j<ret_counts[rank]; j++){
+        /*for(int j=0; j<ret_counts[rank]; j++){
             ret[j] = 0;
             for(int i=0; i<M; i++)
-                ret[j] += mat_part[j*M+i] * v[i];
+                ret[j] += mat_part[j*M+i] * v[i];*/
             //printf("Process slave  %d sum: %d\n", rank, ret[j]);
 
         }
     }
     
-    MPI_Gatherv(ret, ret_counts[rank], MPI_INT, c, ret_counts, ret_displacements, MPI_INT, 0, comm);
+    //MPI_Gatherv(ret, ret_counts[rank], MPI_INT, c, ret_counts, ret_displacements, MPI_INT, 0, comm);
     if(rank==0){
         
         /*printf("Result at process %d is:\n[", rank);
@@ -104,26 +100,9 @@ int main(int argc, char *argv[]){
         }
         printf("]\n");*/
         printf("Elapsed %lf ms\n", (MPI_Wtime()-t1)*1000);
-        if(checkResult(mat, v, c))
-            printf("Result is correct\n");
-        else
-            printf("Result is wrong\n");
     }
 
     MPI_Finalize();
     return 0;
 }
 
-bool checkResult(int *mat, int *v, int *res){
-    int *correct_res;
-    correct_res = (int *) malloc(N * sizeof(int));
-    for(int i=0; i<N; i++){
-        correct_res[i] = 0;
-        for(int j=0; j<M; j++){
-            correct_res[i] += mat[i*M+j] * v[j];
-        }
-        if(correct_res[i]!=res[i])
-            return false;
-    }
-    return true;
-}

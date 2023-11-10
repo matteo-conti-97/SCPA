@@ -15,6 +15,7 @@ int main(int argc, char *argv[]){
     MPI_Comm_dup(MPI_COMM_WORLD, &comm);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+    srand(1);
 
     if(rank==0){
         a= (int *) malloc(N * sizeof(int));
@@ -22,8 +23,9 @@ int main(int argc, char *argv[]){
         c= (int *) malloc(N * sizeof(int));
         //Generate vectors
         for(int i=0; i<N; i++){
-            a[i] = i;
-            b[i] = i;
+            int num = rand() % 101;
+            a[i] = num;
+            b[i] = num;
         }
     }
     
